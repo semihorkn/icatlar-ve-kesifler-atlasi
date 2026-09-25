@@ -5,7 +5,7 @@ Uses only the Python standard library. Geometry is built from first principles;
 no third-party meshes, textures, photographs, or icon packs are incorporated.
 """
 
-import json, math, struct
+import json, math, struct, zlib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -23,7 +23,7 @@ COLORS = {
 
 
 def cube_geometry():
-    p, n, idx = [], [], []
+    p, n, uv, idx = [], [], [], []
     faces = [
         ((1,0,0), [(1,-1,-1),(1,1,-1),(1,1,1),(1,-1,1)]),
         ((-1,0,0), [(-1,-1,1),(-1,1,1),(-1,1,-1),(-1,-1,-1)]),
@@ -34,12 +34,13 @@ def cube_geometry():
     ]
     for normal, verts in faces:
         b=len(p); p.extend([(x/2,y/2,z/2) for x,y,z in verts]); n.extend([normal]*4)
+        uv.extend([(0,0),(1,0),(1,1),(0,1)])
         idx.extend([b,b+1,b+2,b,b+2,b+3])
-    return p,n,idx
+    return p,n,uv,idx
 
 
-def cylinder_geometry(segments=24):
-    p,n,idx=[],[],[]
+def cylinder_geometry(segments=48):
+    p,n,uv,idx=[],[],[],[]
     for i in range(segments):
         a=2*math.pi*i/segments; b=2*math.pi*(i+1)/segments
         base=len(p)
@@ -47,29 +48,31 @@ def cylinder_geometry(segments=24):
               (math.cos(b)/2,.5,math.sin(b)/2),(math.cos(a)/2,.5,math.sin(a)/2)]
         n += [(math.cos(a),0,math.sin(a)),(math.cos(b),0,math.sin(b)),
               (math.cos(b),0,math.sin(b)),(math.cos(a),0,math.sin(a))]
+        uv += [(i/segments,0),((i+1)/segments,0),((i+1)/segments,1),(i/segments,1)]
         idx += [base,base+1,base+2,base,base+2,base+3]
     for y,ny,reverse in [(-.5,-1,True),(.5,1,False)]:
-        c=len(p); p.append((0,y,0)); n.append((0,ny,0))
+        c=len(p); p.append((0,y,0)); n.append((0,ny,0)); uv.append((.5,.5))
         for i in range(segments):
-            a=2*math.pi*i/segments; p.append((math.cos(a)/2,y,math.sin(a)/2)); n.append((0,ny,0))
+            a=2*math.pi*i/segments; p.append((math.cos(a)/2,y,math.sin(a)/2)); n.append((0,ny,0)); uv.append(((math.cos(a)+1)/2,(math.sin(a)+1)/2))
         for i in range(segments):
             a=c; b=c+1+i; d=c+1+(i+1)%segments
             idx += [a,d,b] if reverse else [a,b,d]
-    return p,n,idx
+    return p,n,uv,idx
 
 
 def wedge_geometry():
     p=[(-.5,-.5,-.5),(.5,-.5,-.5),(.5,-.5,.5),(-.5,-.5,.5),(-.5,.5,-.5),(.5,.5,-.5)]
     faces=[(0,3,2,1),(0,1,5,4),(0,4,3),(1,2,5),(3,4,5,2)]
-    outp=[]; outn=[]; idx=[]
+    outp=[]; outn=[]; uv=[]; idx=[]
     for face in faces:
         a,b,c=[p[i] for i in face[:3]]
         u=[b[i]-a[i] for i in range(3)]; v=[c[i]-a[i] for i in range(3)]
         no=(u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0])
         ln=math.sqrt(sum(x*x for x in no)); no=tuple(x/ln for x in no)
         base=len(outp); outp += [p[i] for i in face]; outn += [no]*len(face)
+        uv += ([(0,0),(1,0),(1,1),(0,1)] if len(face)==4 else [(0,0),(1,0),(.5,1)])
         idx += [base,base+1,base+2] + ([base,base+2,base+3] if len(face)==4 else [])
-    return outp,outn,idx
+    return outp,outn,uv,idx
 
 
 GEOMETRY={"box":cube_geometry(),"cyl":cylinder_geometry(),"wedge":wedge_geometry()}
@@ -84,7 +87,7 @@ def wedge(pos,scale,color="wood",rot=None): return part("wedge",pos,scale,color,
 
 
 MODELSPEC={
-"wheel":[cyl((0,0,0),(2.3,.34,2.3),"wood2","z"),cyl((0,0,.05),(.58,.5,.58),"dark","z"),cyl((0,0,0),(3.0,.16,3.0),"wood","z")],
+"wheel":[cyl((0,0,-.05),(2.52,.24,2.52),"dark","z"),cyl((0,0,.02),(2.35,.38,2.35),"wood2","z"),cyl((0,0,.24),(.72,.58,.72),"wood","z"),cyl((0,0,.5),(.34,1.05,.34),"dark","z")],
 "boat":[wedge((0,0,0),(3.8,.8,1.2),"wood2"),box((0,.15,0),(3.2,.18,1.0),"wood"),cyl((0,1.05,0),(.10,2.7,.10),"dark"),wedge((-.02,1.25,.02),(1.85,1.6,.06),"cloth")],
 "press":[box((0,-.8,0),(2.8,.35,1.8),"wood"),box((-1.05,.45,0),(.34,2.7,.5),"wood2"),box((1.05,.45,0),(.34,2.7,.5),"wood2"),box((0,1.65,0),(2.5,.42,.7),"wood"),box((0,-.12,0),(2.0,.18,1.25),"paper"),box((0,.52,0),(1.7,.26,1.05),"wood2"),cyl((0,1.08,0),(.22,1.3,.22),"metal"),box((0,1.62,0),(2.0,.12,.12),"metal")],
 "engine":[box((0,-.82,0),(3.4,.35,1.5),"dark"),cyl((0,.15,0),(1.15,2.5,1.15),"metal","x"),cyl((-.85,1.15,0),(.46,1.7,.46),"black"),cyl((1.05,-.15,.72),(1.45,.22,1.45),"brass","z"),cyl((1.05,-.15,.78),(.35,.32,.35),"dark","z"),box((0,-.2,0),(2.5,.18,1.15),"red")],
@@ -101,30 +104,60 @@ for x in [-1.38,-1.15,-.92,-.23,0,.23,.92,1.15,1.38]:
         MODELSPEC["eniac"].append(cyl((x,y,.41),(.11,.08,.11),c,"z"))
 
 
+def procedural_wood_png(size=256):
+    """Create a deterministic, seamless-looking wood-grain PNG."""
+    rows=[]
+    for y in range(size):
+        row=bytearray([0])
+        for x in range(size):
+            wave=math.sin(y*.23 + math.sin(x*.055)*3.2 + math.sin(y*.037)*2.1)
+            fine=math.sin(y*1.37+x*.03)*.22
+            knot=math.sin(math.sqrt((x-78)**2+(y-142)**2)*.22)*math.exp(-((x-78)**2+(y-142)**2)/2600)
+            v=wave*.5+fine+knot*.8
+            row += bytes((max(0,min(255,int(126+38*v))), max(0,min(255,int(77+25*v))), max(0,min(255,int(38+15*v))), 255))
+        rows.append(bytes(row))
+    raw=b"".join(rows)
+    def chunk(t,d): return struct.pack(">I",len(d))+t+d+struct.pack(">I",zlib.crc32(t+d)&0xffffffff)
+    return b"\x89PNG\r\n\x1a\n"+chunk(b"IHDR",struct.pack(">IIBBBBB",size,size,8,6,0,0,0))+chunk(b"IDAT",zlib.compress(raw,9))+chunk(b"IEND",b"")
+
+
+WOOD_PNG=procedural_wood_png()
+
+
 def write_glb(name, parts):
     blob=bytearray(); views=[]; accessors=[]; meshes=[]; nodes=[]; materials=[]; mat_index={}
-    def add_data(data, target):
+    def add_data(data, target=None):
         while len(blob)%4: blob.append(0)
-        offset=len(blob); blob.extend(data); views.append({"buffer":0,"byteOffset":offset,"byteLength":len(data),"target":target}); return len(views)-1
+        offset=len(blob); blob.extend(data); view={"buffer":0,"byteOffset":offset,"byteLength":len(data)}
+        if target: view["target"]=target
+        views.append(view); return len(views)-1
+    wood_view=add_data(WOOD_PNG)
     for shape,pos,scale,color,rot in parts:
         if color not in mat_index:
             mat_index[color]=len(materials); rgba=COLORS[color]
-            materials.append({"name":color,"pbrMetallicRoughness":{"baseColorFactor":rgba,"metallicFactor":.15 if color in ("metal","brass") else 0,"roughnessFactor":.62}})
-        p,n,ind=GEOMETRY[shape]
+            pbr={"baseColorFactor":rgba,"metallicFactor":.72 if color=="metal" else .45 if color=="brass" else 0,"roughnessFactor":.34 if color in ("metal","brass") else .72}
+            if color in ("wood","wood2"): pbr["baseColorTexture"]={"index":0}
+            materials.append({"name":color,"pbrMetallicRoughness":pbr})
+        p,n,uv,ind=GEOMETRY[shape]
         pv=add_data(b"".join(struct.pack("<3f",*v) for v in p),34962)
         nv=add_data(b"".join(struct.pack("<3f",*v) for v in n),34962)
+        tv=add_data(b"".join(struct.pack("<2f",*v) for v in uv),34962)
         iv=add_data(b"".join(struct.pack("<H",i) for i in ind),34963)
         pa=len(accessors); accessors += [
           {"bufferView":pv,"componentType":5126,"count":len(p),"type":"VEC3","min":[-.5,-.5,-.5],"max":[.5,.5,.5]},
           {"bufferView":nv,"componentType":5126,"count":len(n),"type":"VEC3"},
+          {"bufferView":tv,"componentType":5126,"count":len(uv),"type":"VEC2"},
           {"bufferView":iv,"componentType":5123,"count":len(ind),"type":"SCALAR"}]
-        meshes.append({"primitives":[{"attributes":{"POSITION":pa,"NORMAL":pa+1},"indices":pa+2,"material":mat_index[color]}]})
+        meshes.append({"primitives":[{"attributes":{"POSITION":pa,"NORMAL":pa+1,"TEXCOORD_0":pa+2},"indices":pa+3,"material":mat_index[color]}]})
         node={"mesh":len(meshes)-1,"translation":list(pos),"scale":list(scale)}
         if rot: node["rotation"]=list(rot)
         nodes.append(node)
     doc={"asset":{"version":"2.0","generator":"iotfyedu original procedural model generator"},"scene":0,
          "scenes":[{"nodes":list(range(len(nodes)))}],"nodes":nodes,"meshes":meshes,"materials":materials,
-         "accessors":accessors,"bufferViews":views,"buffers":[{"byteLength":len(blob)}]}
+         "accessors":accessors,"bufferViews":views,"buffers":[{"byteLength":len(blob)}],
+         "samplers":[{"magFilter":9729,"minFilter":9987,"wrapS":10497,"wrapT":10497}],
+         "images":[{"name":"Original procedural wood grain","mimeType":"image/png","bufferView":wood_view}],
+         "textures":[{"sampler":0,"source":0}]}
     js=json.dumps(doc,separators=(",",":")).encode(); js+=b" "*((4-len(js)%4)%4); blob+=b"\0"*((4-len(blob)%4)%4)
     total=12+8+len(js)+8+len(blob)
     out=struct.pack("<4sII",b"glTF",2,total)+struct.pack("<I4s",len(js),b"JSON")+js+struct.pack("<I4s",len(blob),b"BIN\0")+blob
