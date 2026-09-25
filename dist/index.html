@@ -7,7 +7,7 @@
   <meta name="description" content="İnsanlığın dönüm noktası olan icat ve keşifleri Türkçe, etkileşimli ve üç boyutlu biçimde keşfedin.">
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'; frame-ancestors 'none'; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'; worker-src 'self' blob:;">
-  <link rel="icon" type="image/png" href="/assets/logo.png">
+  <link rel="icon" type="image/png" href="assets/logo.png">
   <style>
     :root{--ink:#111715;--muted:#6b746f;--line:#dfe5e1;--paper:#f8faf8;--panel:#fff;--acid:#b7f34a;--deep:#0c1110;--orange:#f2653f}
     *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input{font:inherit}button{color:inherit}img{display:block;max-width:100%}
@@ -25,7 +25,7 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="brand"><div class="brand-logo"><img src="/assets/logo.png" alt="iotfyedu"></div><div><strong>İcatlar ve Keşifler Atlası</strong><small>iotfyedu</small></div></div>
+    <div class="brand"><div class="brand-logo"><img src="assets/logo.png" alt="iotfyedu"></div><div><strong>İcatlar ve Keşifler Atlası</strong><small>iotfyedu</small></div></div>
     <nav><a class="active" href="#kesfet">Keşfet</a><a href="#hikaye">Zaman çizgisi</a><a href="#hakkinda">Hakkında</a></nav>
     <label class="search"><span>⌕</span><input id="search" aria-label="Buluşlarda ara" placeholder="Buluşlarda ara..."></label>
     <button class="mobile-menu" aria-label="Menü">☰</button>
@@ -44,9 +44,9 @@
       <section class="story" id="hakkinda"><span class="eyebrow">GEÇMİŞTEN GELECEĞE</span><h2 id="story-title"></h2><p id="story-copy"></p></section>
     </article>
   </main>
-  <script type="module" src="/assets/model-viewer.min.js"></script>
+  <script type="module" src="assets/model-viewer.min.js"></script>
   <script>
-  const A='/assets/';
+  const A='assets/';
   const innovations=[
     {id:'wheel',model:'wheel.glb',name:'Ahşap Tekerlek',title:'Dünyayı Harekete Geçiren Fikir',date:'MÖ 3500 civarı',place:'Avrupa ve Batı Asya',cat:'Ulaşım',img:'tekerlek.webp',drawing:'tekerlek-cizim.webp',lead:'Basit bir form, sınırsız hareket.',desc:'Tekerlek ve dingil, yuvarlanmayı yük taşımak için kullanılabilir bir sisteme dönüştürdü. Ahşap işçiliğiyle mekanik düşüncenin birleşimi, kara ulaşımını kökten değiştirdi.',facts:[['Köken','Avrupa ve Batı Asya’da erken örnekler'],['Malzeme','Birleştirilmiş ahşap disk ve dingil'],['Temel fikir','Tekerlek ile dingilin birlikte dönmesi'],['Etkisi','Ağır yüklerin daha kolay taşınması']],story:'Yuvarlanan yüklerden akıllı ulaşıma',storyCopy:'Katı ahşap diskler zamanla telli, kauçuk ve kompozit tekerleklere dönüştü; temel mekanik ilke ise yaşamaya devam etti.'},
     {id:'boat',model:'boat.glb',name:'Kamış Tekne',title:'Suyun Üzerinde Yeni Bir Yol',date:'MÖ 3500 civarı',place:'Nil Vadisi, Antik Mısır',cat:'Denizcilik',img:'tekne.webp',drawing:'tekne-cizim.webp',lead:'Hafif malzemeler, yeni bir hareket özgürlüğü.',desc:'Bağlanmış papirüs demetleri Nil üzerinde yolculuk, balıkçılık ve taşıma için hafif ve yüzebilir bir gövde oluşturdu.',facts:[['Köken','Nil Vadisi, Antik Mısır'],['Malzeme','Papirüs kamışları ve bitkisel bağlar'],['Temel fikir','Demetlerden oluşan yüzebilir gövde'],['Etkisi','Nehir ulaşımı ve bölgesel alışveriş']],story:'Akıntıyla başlayan yolculuk',storyCopy:'Kürek, yelken, buhar ve motor teknolojileri; insanlığın su üzerindeki menzilini kıtalara taşıdı.'},
@@ -63,7 +63,7 @@
   const $=s=>document.querySelector(s); const items=$('#items');
   function visible(){return innovations.map((x,i)=>({...x,i})).filter(x=>x.name.toLocaleLowerCase('tr').includes(query)||x.cat.toLocaleLowerCase('tr').includes(query))}
   function renderList(){const v=visible();$('#result-count').textContent=v.length+' nesne';items.innerHTML=v.map(x=>`<button class="item ${x.i===current?'active':''}" data-i="${x.i}"><img class="thumb" src="${A+x.img}" alt=""><span><span class="item-title">${x.name}</span><span class="item-date">${x.date}</span></span><span class="number">${String(x.i+1).padStart(2,'0')}</span></button>`).join('')||'<p style="padding:24px;color:#6b746f">Eşleşen buluş bulunamadı.</p>';items.querySelectorAll('button').forEach(b=>b.onclick=()=>select(+b.dataset.i))}
-  function select(i){current=(i+innovations.length)%innovations.length;const x=innovations[current],viewer=$('#object');location.hash=x.id;viewer.removeAttribute('auto-rotate');$('#rotate').classList.remove('active');viewer.src='/models/'+x.model;viewer.poster=A+x.img;viewer.alt=x.name+' üç boyutlu modeli';$('#stage-date').textContent=x.date.toUpperCase();$('#stage-place').textContent=x.place;$('#position').textContent=String(current+1).padStart(2,'0')+' / '+innovations.length;$('#category').textContent=x.cat;$('#title').textContent=x.title;$('#drawing').src=A+x.drawing;$('#drawing').alt=x.name+' çizimi';$('#lead').textContent=x.lead;$('#description').textContent=x.desc;$('#facts').innerHTML=x.facts.map(f=>`<div class="fact"><b>${f[0]}</b><span>${f[1]}</span></div>`).join('');$('#story-title').textContent=x.story;$('#story-copy').textContent=x.storyCopy;renderList()}
+  function select(i){current=(i+innovations.length)%innovations.length;const x=innovations[current],viewer=$('#object');location.hash=x.id;viewer.removeAttribute('auto-rotate');$('#rotate').classList.remove('active');viewer.src='models/'+x.model;viewer.poster=A+x.img;viewer.alt=x.name+' üç boyutlu modeli';$('#stage-date').textContent=x.date.toUpperCase();$('#stage-place').textContent=x.place;$('#position').textContent=String(current+1).padStart(2,'0')+' / '+innovations.length;$('#category').textContent=x.cat;$('#title').textContent=x.title;$('#drawing').src=A+x.drawing;$('#drawing').alt=x.name+' çizimi';$('#lead').textContent=x.lead;$('#description').textContent=x.desc;$('#facts').innerHTML=x.facts.map(f=>`<div class="fact"><b>${f[0]}</b><span>${f[1]}</span></div>`).join('');$('#story-title').textContent=x.story;$('#story-copy').textContent=x.storyCopy;renderList()}
   $('#prev').onclick=()=>select(current-1);$('#next').onclick=()=>select(current+1);$('#rotate').onclick=()=>{const viewer=$('#object'),on=viewer.hasAttribute('auto-rotate');viewer.toggleAttribute('auto-rotate',!on);$('#rotate').classList.toggle('active',!on)};$('#reset').onclick=()=>{const viewer=$('#object');viewer.cameraOrbit='auto auto auto';viewer.fieldOfView='auto';if(viewer.resetTurntableRotation)viewer.resetTurntableRotation();if(viewer.jumpCameraToGoal)viewer.jumpCameraToGoal()};$('#search').oninput=e=>{query=e.target.value.toLocaleLowerCase('tr').trim();renderList()};document.addEventListener('keydown',e=>{if(e.key==='ArrowRight')select(current+1);if(e.key==='ArrowLeft')select(current-1)});const fromHash=innovations.findIndex(x=>x.id===location.hash.slice(1));select(fromHash<0?0:fromHash);
   </script>
 </body>
